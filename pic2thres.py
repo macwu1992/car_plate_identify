@@ -3,24 +3,25 @@
 import cv2
 import numpy as np
 
-#OpenCV定义的结构元素  
+#OpenCV定义的结构元素
 kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(20, 2))
-kernel1 = cv2.getStructuringElement(cv2.MORPH_RECT,(1, 3)) 
+kernel1 = cv2.getStructuringElement(cv2.MORPH_RECT,(1, 3))
 
 imglist = []
 originlist = []
-
-from squares import find_squares
 
 def squares(imglist, originlist):
 	i = 0
 	for img in imglist:
 		im2, contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-		for tours in contours:  
+		for tours in contours:
 			rc = cv2.boundingRect(tours)
-            #rc[0] 表示图像左上角的纵坐标，rc[1] 表示图像左上角的横坐标，rc[2] 表示图像的宽度，rc[3] 表示图像的高度，  
-			if (rc[2]/rc[3]>1.8) & (rc[2]/rc[3]<6) & (rc[2]*rc[3]>1000):
+            #rc[0] 表示图像左上角的纵坐标，rc[1] 表示图像左上角的横坐标，rc[2] 表示图像的宽度，rc[3] 表示图像的高度，
+			if (rc[2]/rc[3]>1.8) & (rc[2]/rc[3]<6) & (rc[2]*rc[3]>3000):
+                # originlist[i][rc[0]:rc[0]+rc[2],rc[1]:rc[1]+rc[3]]
+				print rc
 				cv2.rectangle(originlist[i], (rc[0],rc[1]),(rc[0]+rc[2],rc[1]+rc[3]),(255,0,123), 2)
+                plate = originlist[i][rc[0]:rc[0]+rc[2], rc[1]:rc[1]+rc[3]]
 		i += 1
 	return originlist
 
@@ -46,7 +47,7 @@ for fn in glob('plates/*.jpg'):
 
 	#利用竖向纹理筛选车牌，第三四个参数，决定竖向纹理的筛选
 	img = cv2.Sobel(img, cv2.CV_8U, 2, 0, ksize = 3)
-	
+
 	#python中二值化 threshold 返回两个参数，使用（_, img_thres）来接受两个返回值
 	_, img_thres = cv2.threshold(img, 150, 255, cv2.THRESH_BINARY)
 
@@ -60,11 +61,10 @@ for fn in glob('plates/*.jpg'):
 	img = cv2.erode(img, kernel1, 5)
 
 	#闭运算：先膨胀后腐蚀的过程，用于连接被误分为小块的元素
-	# img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel, 3) 
+	# img = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel, 3)
 
 	#开运算：其实就是先腐蚀后膨胀的过程
 	# opened = cv2.morphologyEx(closed, cv2.MORPH_OPEN, kernel1, iterations = 1)
 	imglist.append(img)
-
 
 imgshow(squares(imglist, originlist))
